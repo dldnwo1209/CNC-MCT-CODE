@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>삼일공고 로봇설계과 퀴즈</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; margin: 0; -webkit-text-size-adjust: 100%; }
+        .box { max-width: 500px; margin: 15px auto; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #007bff; text-align: center; margin-top: 0; font-size: 1.4rem; }
+        .q-card { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .tag { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; color: #fff; margin-bottom: 8px; font-weight: bold; }
+        .t-cnc { background: #28a745; } .t-mc { background: #17a2b8; } .t-m { background: #fd7e14; }
+        .q-txt { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: #333; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; box-sizing: border-box; text-transform: uppercase; -webkit-appearance: none; }
+        input:focus { border-color: #007bff; outline: none; }
+        button { width: 100%; padding: 16px; margin-top: 15px; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        #checkBtn { background: #007bff; }
+        #retryBtn { background: #28a745; display: none; }
+        .ans { color: #d93025; font-weight: bold; display: none; margin-top: 10px; padding: 10px; background: #fff2f1; border-radius: 8px; border-left: 4px solid #d93025; }
+        #pass-ui, #lock-ui { display: none; text-align: center; }
+        #timer { font-size: 3rem; color: #d93025; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div id="quiz-ui" class="box">
+        <h2>Samil Tech Robot Design</h2>
+        <p style="text-align:center; color:#666; font-size:0.9rem;">8점 미만은 10분간 재응시가 불가합니다.</p>
+        <div id="list"></div>
+        <button id="checkBtn" onclick="score()">정답 제출</button>
+        <button id="retryBtn" onclick="location.reload()">다른 문제 풀기</button>
+    </div>
+
+    <div id="pass-ui" class="box">
+        <h2 style="color:#28a745">🎉 합격 (PASS)</h2>
+        <p id="fscore" style="font-size:1.3rem; font-weight:bold"></p>
+        <button onclick="review()" style="background:#007bff">오답 확인하기</button>
+    </div>
+
+    <div id="lock-ui" class="box">
+        <h2 style="color:#d93025">❌ 차단됨 (FAIL)</h2>
+        <p>너무 많이 틀렸습니다. 복습 후 다시 하세요.</p>
+        <div id="timer">10:00</div>
+    </div>
+
+    <script>
+        var db = [
+            /* CNC */
+            {t:"CNC", c:"G00", f:"위치결정(급속 이송)", g:"cnc"}, {t:"CNC", c:"G01", f:"직선보간(절삭 이송)", g:"cnc"},
+            {t:"CNC", c:"G02", f:"원호보간(CW : 시계방향)", g:"cnc"}, {t:"CNC", c:"G03", f:"원호보간(CCW : 반시계방향)", g:"cnc"},
+            {t:"CNC", c:"G04", f:"휴지(Dwell)", g:"cnc"}, {t:"CNC", c:"G27", f:"원점복귀 확인", g:"cnc"},
+            {t:"CNC", c:"G28", f:"자동 원점 복귀", g:"cnc"}, {t:"CNC", c:"G40", f:"공구 인선 반지름 보정 취소", g:"cnc"},
+            {t:"CNC", c:"G41", f:"공구 인선 반지름 보정 좌측", g:"cnc"}, {t:"CNC", c:"G42", f:"공구 인선 반지름 보정 우측", g:"cnc"},
+            {t:"CNC", c:"G50", f:"공작물 좌표계 설정 / 주축 최고 회전수", g:"cnc"}, {t:"CNC", c:"G70", f:"다듬 절삭 사이클", g:"cnc"},
+            {t:"CNC", c:"G71", f:"안·바깥지름 거친 절삭 사이클", g:"cnc"}, {t:"CNC", c:"G96", f:"절삭속도 일정제어", g:"cnc"},
+            {t:"CNC", c:"G97", f:"주축 회전수 일정제어", g:"cnc"}, {t:"CNC", c:"G98", f:"분당 이송 지정(mm/min)", g:"cnc"},
+            {t:"CNC", c:"G99", f:"회전당 이송 지정(mm/rev)", g:"cnc"},
+            /* MCT */
+            {t:"MCT", c:"G00", f:"급속 위치결정", g:"mc"}, {t:"MCT", c:"G01", f:"직선보간(절삭)", g:"mc"},
+            {t:"MCT", c:"G43", f:"공구길이 보정 +", g:"mc"}, {t:"MCT", c:"G44", f:"공구길이 보정 -", g:"mc"},
+            {t:"MCT", c:"G30", f:"제2·3·4 원점 복귀", g:"mc"}, {t:"MCT", c:"G92", f:"공작물 좌표계 설정", g:"mc"},
+            {t:"MCT", c:"G90", f:"절대지령", g:"mc"}, {t:"MCT", c:"G91", f:"증분지령", g:"mc"},
+            /* M-코드 */
+            {t:"M-코드", c:"M00", f:"프로그램 정지", g:"m"}, {t:"M-코드", c:"M01", f:"선택 프로그램 정지", g:"m"},
+            {t:"M-코드", c:"M03", f:"주축 정회전", g:"m"}, {t:"M-코드", c:"M04", f:"주축 역회전", g:"m"},
+            {t:"M-코드", c:"M08", f:"절삭유 ON", g:"m"}, {t:"M-코드", c:"M09", f:"절삭유 OFF", g:"m"},
+            {t:"M-코드", c:"M30", f:"프로그램 종료 및 리와인드", g:"m"}, {t:"M-코드", c:"M98", f:"보조프로그램 호출", g:"m"},
+            {t:"M-코드", c:"M99", f:"보조프로그램 종료", g:"m"}
+        ];
+
+        var sel = [];
+
+        function init() {
+            var lock = localStorage.getItem('samil_lock_v5') || 0;
+            if (Date.now() < lock) {
+                document.getElementById('quiz-ui').style.display = 'none';
+                document.getElementById('lock-ui').style.display = 'block';
+                var s = Math.ceil((lock - Date.now()) / 1000);
+                setInterval(function() {
+                    document.getElementById('timer').innerText = Math.floor(s/60) + ":" + (s%60<10?'0':'') + s%60;
+                    if (--s < 0) location.reload();
+                }, 1000);
+                return;
+            }
+            db.sort(function(){return 0.5-Math.random()});
+            sel = db.slice(0, 10);
+            var h = "";
+            for(var i=0; i<10; i++) {
+                h += '<div class="q-card"><span class="tag t-'+sel[i].g+'">'+sel[i].t+'</span><div class="q-txt">'+(i+1)+'. '+sel[i].f+'</div><input type="text" class="uInp" autocomplete="off" inputmode="text"><div class="ans">정답: '+sel[i].c+'</div></div>';
+            }
+            document.getElementById('list').innerHTML = h;
+        }
+
+        window.score = function() {
+            var inps = document.getElementsByClassName('uInp'), anss = document.getElementsByClassName('ans'), s = 0;
+            for(var i=0; i<10; i++) {
+                if(inps[i].value.trim().toUpperCase() === sel[i].c) s++;
+                else anss[i].style.display = "block";
+                inps[i].disabled = true;
+            }
+            if(s < 8) {
+                localStorage.setItem('samil_lock_v5', Date.now() + 600000);
+                alert("불합격! " + s + "점입니다. 10분간 잠깁니다.");
+                location.reload();
+            } else {
+                document.getElementById('quiz-ui').style.display = 'none';
+                document.getElementById('pass-ui').style.display = 'block';
+                document.getElementById('fscore').innerText = s + " / 10 점";
+            }
+        };
+
+        window.review = function() {
+            document.getElementById('pass-ui').style.display = 'none';
+            document.getElementById('quiz-ui').style.display = 'block';
+            document.getElementById('checkBtn').style.display = 'none';
+            document.getElementById('retryBtn').style.display = 'block';
+        };
+
+        init();
+    </script>
+</body>
+</html>
