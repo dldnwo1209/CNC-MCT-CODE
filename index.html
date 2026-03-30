@@ -48,10 +48,8 @@
         var db = [
             /* CNC선반 (17개) */
             {t:"CNC선반", c:"G00", f:"위치결정 (급속 이송)", g:"cnc"}, {t:"CNC선반", c:"G01", f:"직선보간 (절삭 이송)", g:"cnc"}, {t:"CNC선반", c:"G02", f:"원호보간 (CW : 시계방향)", g:"cnc"}, {t:"CNC선반", c:"G03", f:"원호보간 (CCW : 반시계방향)", g:"cnc"}, {t:"CNC선반", c:"G04", f:"휴지 (Dwell)", g:"cnc"}, {t:"CNC선반", c:"G27", f:"원점복귀 확인", g:"cnc"}, {t:"CNC선반", c:"G28", f:"자동 원점 복귀", g:"cnc"}, {t:"CNC선반", c:"G40", f:"공구 인선 반지름 보정 취소", g:"cnc"}, {t:"CNC선반", c:"G41", f:"공구 인선 반지름 보정 (좌측)", g:"cnc"}, {t:"CNC선반", c:"G42", f:"공구 인선 반지름 보정 (우측)", g:"cnc"}, {t:"CNC선반", c:"G50", f:"공작물 좌표계 설정 / 주축 최고 회전수", g:"cnc"}, {t:"CNC선반", c:"G70", f:"다듬 절삭 사이클", g:"cnc"}, {t:"CNC선반", c:"G71", f:"안·바깥지름 거친 절삭 사이클", g:"cnc"}, {t:"CNC선반", c:"G96", f:"절삭속도(m/min) 일정제어", g:"cnc"}, {t:"CNC선반", c:"G97", f:"주축 회전수(rpm) 일정제어", g:"cnc"}, {t:"CNC선반", c:"G98", f:"분당 이송 지정 (mm/min)", g:"cnc"}, {t:"CNC선반", c:"G99", f:"회전당 이송 지정 (mm/rev)", g:"cnc"},
-            
             /* 머시닝센터 (22개) */
             {t:"머시닝센터", c:"G00", f:"급속 위치결정", g:"mc"}, {t:"머시닝센터", c:"G01", f:"직선보간 (절삭)", g:"mc"}, {t:"머시닝센터", c:"G02", f:"원호보간 (시계방향)", g:"mc"}, {t:"머시닝센터", c:"G03", f:"원호보간 (반시계방향)", g:"mc"}, {t:"머시닝센터", c:"G04", f:"휴지 (Dwell)", g:"mc"}, {t:"머시닝센터", c:"G27", f:"원점 복귀 확인", g:"mc"}, {t:"머시닝센터", c:"G28", f:"자동원점 복귀", g:"mc"}, {t:"머시닝센터", c:"G30", f:"제2·3·4 원점 복귀", g:"mc"}, {t:"머시닝센터", c:"G40", f:"공구경 보정 취소", g:"mc"}, {t:"머시닝센터", c:"G41", f:"공구경 보정 (좌측)", g:"mc"}, {t:"머시닝센터", c:"G42", f:"공구경 보정 (우측)", g:"mc"}, {t:"머시닝센터", c:"G43", f:"공구길이 보정 (+)", g:"mc"}, {t:"머시닝센터", c:"G44", f:"공구길이 보정 (-)", g:"mc"}, {t:"머시닝센터", c:"G49", f:"공구길이 보정 취소", g:"mc"}, {t:"머시닝센터", c:"G80", f:"고정사이클 취소", g:"mc"}, {t:"머시닝센터", c:"G90", f:"절대지령", g:"mc"}, {t:"머시닝센터", c:"G91", f:"증분지령", g:"mc"}, {t:"머시닝센터", c:"G92", f:"공작물 좌표계 설정", g:"mc"}, {t:"머시닝센터", c:"G94", f:"분당 이송 (mm/min)", g:"mc"}, {t:"머시닝센터", c:"G95", f:"회전당 이송 (mm/rev)", g:"mc"}, {t:"머시닝센터", c:"G96", f:"주축 속도 일정제어", g:"mc"}, {t:"머시닝센터", c:"G97", f:"주축 회전수 일정제어", g:"mc"},
-            
             /* M-코드 (11개) */
             {t:"M-코드", c:"M00", f:"프로그램 정지", g:"m"}, {t:"M-코드", c:"M01", f:"선택 프로그램 정지 (Optional Stop)", g:"m"}, {t:"M-코드", c:"M02", f:"프로그램 끝", g:"m"}, {t:"M-코드", c:"M03", f:"주축 정회전", g:"m"}, {t:"M-코드", c:"M04", f:"주축 역회전", g:"m"}, {t:"M-코드", c:"M05", f:"주축 정지", g:"m"}, {t:"M-코드", c:"M08", f:"절삭유 ON", g:"m"}, {t:"M-코드", c:"M09", f:"절삭유 OFF", g:"m"}, {t:"M-코드", c:"M30", f:"프로그램 종료 및 리와인드", g:"m"}, {t:"M-코드", c:"M98", f:"보조프로그램 호출", g:"m"}, {t:"M-코드", c:"M99", f:"보조프로그램 종료", g:"m"}
         ];
@@ -59,7 +57,7 @@
         var selected = [];
 
         function init() {
-            var lock = localStorage.getItem('samil_quiz_final_v12') || 0;
+            var lock = localStorage.getItem('samil_quiz_strict_v14') || 0;
             if (Date.now() < lock) {
                 document.getElementById('quiz-ui').style.display = 'none';
                 document.getElementById('lock-ui').style.display = 'block';
@@ -79,8 +77,8 @@
             for (var i = 0; i < selected.length; i++) {
                 h += '<div class="q-card">' +
                      '<span class="tag t-' + selected[i].g + '">' + selected[i].t + '</span>' +
-                     '<div class="q-txt">' + (i+1) + ". " + selected[i].f + '</div>' + // '는?' 제거됨
-                     '<input type="text" class="uInp" placeholder="예: G01" autocomplete="off">' +
+                     '<div class="q-txt">' + (i+1) + ". " + selected[i].f + '</div>' + 
+                     '<input type="text" class="uInp" autocomplete="off" spellcheck="false">' + 
                      '<div class="ans">정답: ' + selected[i].c + '</div>' +
                      '</div>';
             }
@@ -95,8 +93,8 @@
                 inps[i].disabled = true;
             }
             if (score < 8) {
-                localStorage.setItem('samil_quiz_final_v12', Date.now() + 600000);
-                alert("불합격! " + score + "점입니다. 10분간 차단됩니다.");
+                localStorage.setItem('samil_quiz_strict_v14', Date.now() + 600000);
+                alert("불합격! " + score + "점입니다. 10분간 재응시가 불가합니다.");
                 location.reload();
             } else {
                 document.getElementById('quiz-ui').style.display = 'none';
